@@ -9,11 +9,21 @@ A simple API that routes GET requests through randomly selected proxies from a l
 npm install
 ```
 
-2. Make sure your `proxies.txt` file is in the root directory and contains your proxy list in the format:
+2. Make sure your `proxies.txt` file is in the root directory and contains your proxy list in one of the following formats:
+
+- Without authentication:
 ```
-ip1:port1
-ip2:port2
-ip3:port3
+ip:port
+```
+- With authentication:
+```
+ip:port:username:password
+```
+
+**Example:**
+```
+123.45.67.89:8080
+98.76.54.32:3128:myuser:mypass
 ```
 
 ## Running the API
@@ -46,7 +56,7 @@ Response:
 ```json
 {
     "data": "<response data from target URL>",
-    "proxy": "ip:port"
+    "proxy": "ip:port[:username:password]"
 }
 ```
 
@@ -68,3 +78,8 @@ The API will return appropriate error messages if:
 - The URL parameter is missing
 - No proxies are available
 - The proxy request fails
+- The proxy format is invalid
+
+## Notes
+- Proxies with authentication are supported (username and password).
+- Make sure there are no empty lines or extra spaces in your `proxies.txt` file.
