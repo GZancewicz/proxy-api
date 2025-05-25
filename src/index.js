@@ -3,6 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,14 +45,28 @@ app.get('/proxy', async (req, res) => {
         }
 
         const proxy = getRandomProxy(proxies);
-        const proxyConfig = {
-            proxy: {
-                host: proxy.split(':')[0],
-                port: proxy.split(':')[1]
-            }
-        };
+        // Parse proxy string
+        const [host, port, username, password] = proxy.split(':');
+        let proxyUrl;
+        if (username && password) {
+            proxyUrl = `http://${username}:${password}@${host}:${port}`;
+        } else {
+            proxyUrl = `http://${host}:${port}`;
+        }
+        console.log('Using proxy:', proxyUrl);
 
-        const response = await axios.get(targetUrl, proxyConfig);
+        let axiosConfig = {};
+        if (targetUrl.startsWith('https://')) {
+            axiosConfig = {
+                httpsAgent: new HttpsProxyAgent(proxyUrl),
+            };
+        } else {
+            axiosConfig = {
+                httpAgent: new HttpsProxyAgent(proxyUrl),
+            };
+        }
+
+        const response = await axios.get(targetUrl, axiosConfig);
         res.json({
             data: response.data,
             proxy: proxy
