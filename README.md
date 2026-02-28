@@ -1,85 +1,95 @@
 # Proxy API
 
-A simple API that routes GET requests through randomly selected proxies from a list.
+A lightweight Express.js API that routes outbound GET requests through a rotating pool of proxies. Each request is forwarded through a randomly selected proxy, distributing traffic across the pool.
 
-## Setup
+## Quick Start
 
-1. Install dependencies:
 ```bash
 npm install
-```
-
-2. Make sure your `proxies.txt` file is in the root directory and contains your proxy list in one of the following formats:
-
-- Without authentication:
-```
-ip:port
-```
-- With authentication:
-```
-ip:port:username:password
-```
-
-**Example:**
-```
-123.45.67.89:8080
-98.76.54.32:3128:myuser:mypass
-```
-
-## Running the API
-
-Development mode:
-```bash
 npm run dev
 ```
 
-Production mode:
-```bash
-npm start
+The server starts on `http://localhost:3000`.
+
+## Configuration
+
+### Proxy List
+
+Create a `proxies.txt` file in the project root with one proxy per line:
+
+```
+# Without authentication
+123.45.67.89:8080
+
+# With authentication
+98.76.54.32:3128:myuser:mypass
 ```
 
-The API will run on port 3000 by default. You can change this by setting the `PORT` environment variable.
+Format: `host:port` or `host:port:username:password`
 
-## API Endpoints
+### Environment Variables
 
-### Proxy Request
-```
-GET /proxy?url=<target_url>
-```
+| Variable | Default | Description       |
+|----------|---------|-------------------|
+| `PORT`   | `3000`  | Server listen port |
 
-Example:
+## API Reference
+
+### `GET /proxy?url=<target_url>`
+
+Fetches the target URL through a randomly selected proxy and returns the response.
+
+**Request:**
+
 ```bash
 curl "http://localhost:3000/proxy?url=https://api.example.com/data"
 ```
 
-Response:
+**Success Response** (`200`):
+
 ```json
 {
-    "data": "<response data from target URL>",
-    "proxy": "ip:port[:username:password]"
+    "data": "<response from target URL>",
+    "proxy": "123.45.67.89:8080"
 }
 ```
 
-### Health Check
-```
-GET /health
-```
+**Error Responses:**
 
-Response:
+| Status | Cause                          |
+|--------|--------------------------------|
+| `400`  | Missing `url` query parameter  |
+| `500`  | No proxies loaded or request failed |
+
 ```json
 {
-    "status": "ok"
+    "error": "Failed to proxy request",
+    "details": "connect ETIMEDOUT"
 }
 ```
 
-## Error Handling
+### `GET /health`
 
-The API will return appropriate error messages if:
-- The URL parameter is missing
-- No proxies are available
-- The proxy request fails
-- The proxy format is invalid
+Returns server status.
 
-## Notes
-- Proxies with authentication are supported (username and password).
-- Make sure there are no empty lines or extra spaces in your `proxies.txt` file.
+```json
+{ "status": "ok" }
+```
+
+## Scripts
+
+| Command         | Description                             |
+|-----------------|-----------------------------------------|
+| `npm start`     | Start the server                        |
+| `npm run dev`   | Start with auto-reload via nodemon      |
+
+## Tech Stack
+
+- **Express** — HTTP server and routing
+- **Axios** — Outbound HTTP client
+- **https-proxy-agent** — Proxy tunneling for HTTP/HTTPS targets
+- **cors** — Cross-origin request support
+
+## License
+
+[MIT](LICENSE)
